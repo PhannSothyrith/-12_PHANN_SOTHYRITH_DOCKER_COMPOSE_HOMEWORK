@@ -1,0 +1,28 @@
+services:
+  my_spring:
+    image: 'docker-spring-boot-postgres:latest'
+    build:
+      context: .
+    container_name: my_spring
+    depends_on:
+      - postgres
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres_db
+      - SPRING_DATASOURCE_USERNAME=sothyrith10
+      - SPRING_DATASOURCE_PASSWORD=1234
+
+    ports:
+      - "8081:8080"
+
+  postgres:
+    image: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - my_volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=sothyrith10
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=postgres_db
+volumes:
+  my_volume:
