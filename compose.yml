@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   my_spring:
     image: 'docker-spring-boot-postgres:latest'
@@ -10,7 +12,6 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres_db
       - SPRING_DATASOURCE_USERNAME=sothyrith10
       - SPRING_DATASOURCE_PASSWORD=1234
-
     ports:
       - "8081:8080"
 
@@ -24,5 +25,55 @@ services:
       - POSTGRES_USER=sothyrith10
       - POSTGRES_PASSWORD=1234
       - POSTGRES_DB=postgres_db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672" 
+      - "5672:5672"  
+
+  postgres2:
+    image: postgres:16.2
+    volumes:
+      - my_keycloak_volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=keycloak_db
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=1234
+    networks:
+      - keycloak_network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.6
+    command: start
+    environment:
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8080
+      - KC_HOSTNAME_STRICT_BACKCHANNEL=false
+      - KC_HTTP_ENABLED=true
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HEALTH_ENABLED=true
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres2/keycloak_db
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=1234
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    restart: always
+    depends_on:
+      - postgres2
+    networks:
+      - keycloak_network
+
 volumes:
   my_volume:
+    driver: local
+  my_keycloak_volume:
+    driver: local
+
+networks:
+  keycloak_network:
+    driver: bridge
